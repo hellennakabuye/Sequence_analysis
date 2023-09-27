@@ -1,0 +1,13 @@
+#!/bin/bash
+
+sample.fastq fastqc # Running the quality control for the sample
+multiqc . # Aggregating multiple fastqc reports into one, thats easy to navigate
+
+for f in $(ls *.fastq | sed -e 's/_1.fastq//' -e 's/_2.fastq//' | sort -u)
+do
+bwa mem -t 20 h37rv.fasta ${f}_1.fastq ${f}_2.fastq > /etc/ace-data/home/hnakabuye/${f}.sam # Alignment of the samples to get a sam file
+samtools view -Sb ${f}.sam > /etc/ace-data/home/hnakabuye/${f}.bam # Changing the alignment file from sam to bam for sorting
+samtools sort ${f}.bam -o ${f}.sorted_bam #Sorting the alignment bam file
+samtools index ${f}.sorted_bam #Indexing my sorted alignment file
+freebayes -f h37rv.fasta ${f}.sorted_bam > ${f}_vcf #Calling the variants
+done
